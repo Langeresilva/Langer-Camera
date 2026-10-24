@@ -1,4 +1,4 @@
-# Langer Câmera — 0.1.7
+# Langer Câmera — 0.1.8
 
 Câmera Android desenvolvida para testes no Redmi Note 14 4G (24117RN76L), Android 16. Pacote: `br.com.luma.camera`. Sem anúncios, contas ou APIs pagas. Fotos e vídeos são processados no próprio aparelho. A internet é usada pelo atualizador quando solicitado.
 
@@ -15,7 +15,7 @@ Canal oficial: `https://github.com/Langeresilva/Langer-Camera/releases/latest/do
 
 ## Recursos
 
-Captura frontal e traseira; toque para foco/exposição; fotos com ajuste conservador de iluminação e preservação das cores; original e tratada preservadas na galeria com o mesmo identificador. O botão Comparar fotos alterna entre as duas versões da última captura concluída.
+Captura frontal e traseira; toque para foco/exposição; fotos com ajuste conservador de iluminação e preservação das cores; somente a foto tratada é publicada na galeria. O envio ao ChatGPT usa essa versão.
 
 Vídeo com áudio quando autorizado, preferência por Full HD a 30 fps, estabilização após a gravação por rastreamento de pontos e suavização da trajetória. O tratamento analisa 15 amostras por segundo, limita deslocamento/rotação e usa zoom 1,25, equivalente a recortar cerca de 20% da largura e da altura visíveis. Se o rastreamento for insuficiente, exporta sem estabilizar. Correção moderada de brilho e cor consistente na sequência.
 
@@ -70,3 +70,7 @@ Compilação, 14 testes JVM e lint aprovados; compartilhamento e recepção de i
 ## Abertura direta — 0.1.7
 
 O envio passa a usar ACTION_SEND direcionado a com.openai.chatgpt, sem criar o seletor de aplicativos no caminho principal. Mantém foto original, texto e permissão temporária de leitura. Se o Android não conseguir abrir esse destino, oferece a seleção manual em um diálogo de alternativa. Não força envio da mensagem dentro do ChatGPT. Compilação, 14 testes JVM e lint passaram; abertura no app receptor ainda depende de teste no aparelho.
+
+## Salvamento único — 0.1.8
+
+Novas fotos são tratadas antes da publicação e somente a versão tratada aparece na galeria. O original temporário privado é removido depois que a tratada é salva com sucesso; em falha ou cancelamento permanece recuperável. O comparador foi removido. O envio ao ChatGPT passa a usar photoTreated. Fotos antigas não são apagadas. Vídeos continuam preservando original e resultado. Compilação, 14 testes JVM e lint aprovados; salvamento único e compartilhamento precisam de validação no aparelho.

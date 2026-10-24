@@ -19,7 +19,6 @@ public class ProcessingService extends Service {
  private File source,output;
  private boolean video,originalPublished;
  private String captureName;
- private Uri originalUri;
  private volatile boolean ended;
  private static final String CHANNEL="processing";
  private PowerManager.WakeLock wakeLock;
@@ -51,18 +50,17 @@ public class ProcessingService extends Service {
   getSharedPreferences("luma",0).edit().putString("pending",source.getAbsolutePath()).putBoolean("pendingVideo",video).apply();
   worker.execute(()->{
    try {
-    originalUri=MediaFiles.publish(this,source,video,captureName+"_original."+(video?"mp4":"jpg"));originalPublished=true;
-    if(!video)getSharedPreferences("luma",0).edit().putString("shareOriginal",originalUri.toString()).apply();
     output=new File(getCacheDir(),"enhanced_"+MediaFiles.stamp()+(video?".mp4":".jpg"));
     if(video){
+     MediaFiles.publish(this,source,true,captureName+"_original.mp4");originalPublished=true;
      VideoAnalyzer.Result analysis=VideoAnalyzer.analyze(source,stabilize,s->status(s,true));
      main.post(()->exportVideo(analysis,stabilize));
     } else {
      status("Melhorando iluminação e cores…",true);PhotoEnhancer.process(source,output);
      if(ended) return;
      Uri treatedUri=MediaFiles.publish(this,output,false,captureName+"_tratada.jpg");
-     getSharedPreferences("luma",0).edit().putString("photoOriginal",originalUri.toString()).putString("photoTreated",treatedUri.toString()).apply();
-     main.post(()->finish("Duas fotos salvas · toque em Comparar fotos",true));
+     getSharedPreferences("luma",0).edit().putString("photoTreated",treatedUri.toString()).remove("photoOriginal").remove("shareOriginal").apply();
+     main.post(()->finish("Foto tratada salva",true));
     }
    }catch(Exception|OutOfMemoryError e){main.post(()->fail(e));}
   });
