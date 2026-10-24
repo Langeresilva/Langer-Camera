@@ -1,0 +1,8 @@
+.tools/
+.gradle/
+**/build/
+local.properties
+*.jks
+*-log.txt
+/entrega/
+__pycache__/

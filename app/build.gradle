@@ -1,0 +1,30 @@
+plugins { id 'com.android.application' }
+android {
+ namespace 'br.com.luma.camera'
+ compileSdk 35
+ defaultConfig {
+  applicationId 'br.com.luma.camera'
+  minSdk 33
+  targetSdk 35
+  versionCode 5
+  versionName '0.1.4'
+  testInstrumentationRunner 'br.com.luma.camera.PipelineInstrumentation'
+ }
+ compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+ buildTypes { release { minifyEnabled false } }
+ packaging { resources.excludes += ['META-INF/DEPENDENCIES'] }
+ splits { abi { enable true; reset(); include 'arm64-v8a', 'x86_64'; universalApk false } }
+}
+dependencies {
+ implementation 'androidx.exifinterface:exifinterface:1.4.1'
+ implementation 'androidx.activity:activity:1.10.1'
+ implementation 'androidx.camera:camera-core:1.4.2'
+ implementation 'androidx.camera:camera-camera2:1.4.2'
+ implementation 'androidx.camera:camera-lifecycle:1.4.2'
+ implementation 'androidx.camera:camera-view:1.4.2'
+ implementation 'androidx.camera:camera-video:1.4.2'
+ implementation 'androidx.media3:media3-transformer:1.6.1'
+ implementation 'androidx.media3:media3-effect:1.6.1'
+ implementation 'org.opencv:opencv:4.12.0'
+ testImplementation 'junit:junit:4.13.2'
+}
