@@ -1,4 +1,4 @@
-# Langer Câmera — 0.1.5
+# Langer Câmera — 0.1.6
 
 Câmera Android desenvolvida para testes no Redmi Note 14 4G (24117RN76L), Android 16. Pacote: `br.com.luma.camera`. Sem anúncios, contas ou APIs pagas. Fotos e vídeos são processados no próprio aparelho. A internet é usada pelo atualizador quando solicitado.
 
@@ -58,3 +58,11 @@ CameraX 1.4.2, Activity 1.10.1, ExifInterface 1.4.1, Media3 1.6.1 e OpenCV 4.12.
 ## Correção fotográfica 0.1.5
 
 Remove o balanço de branco estimado pela média da cena: fundos de cor dominante podiam alterar a pele. Remove saturação forçada e gamma global agressivo. O tratamento aplica o mesmo ganho aos canais RGB, limitado a 12%, para levantar sombras/médios escuros sem modificar cores intencionalmente; preserva áreas claras e cenas bem expostas. Arredondamento, redução de resolução quando necessária e recompressão JPEG ainda podem causar pequenas diferenças. A nova aparência precisa ser avaliada no aparelho. As fotos pessoais fornecidas para diagnóstico não fazem parte do repositório.
+
+## Compartilhar com o ChatGPT — 0.1.6
+
+O botão Enviar ao ChatGPT está na câmera e no comparador. Após confirmação, o Android compartilha a foto original por content URI com permissão temporária de leitura e um pedido de edição. O usuário seleciona o ChatGPT no seletor de aplicativos e confirma a mensagem. Se o receptor ignorar o texto, o diálogo permite copiar o pedido e colar manualmente. O comparador compartilha a original correspondente ao par exibido. Na câmera, usa a original mais recente publicada, mesmo que o tratamento local tenha falhado.
+
+Não há integração com a API da OpenAI, credencial, processamento pago automático ou envio em segundo plano. A edição ocorre no aplicativo receptor e obedece aos limites da conta do usuário. O resultado precisa ser salvo manualmente pelo ChatGPT; não retorna automaticamente ao Langer Câmera. O app não verifica assinatura ou disponibilidade de edição da conta. A captura e o tratamento local permanecem disponíveis.
+
+Compilação, 14 testes JVM e lint aprovados; compartilhamento e recepção de imagem/texto no ChatGPT ainda precisam ser validados no celular.

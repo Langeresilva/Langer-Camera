@@ -52,6 +52,7 @@ public class ProcessingService extends Service {
   worker.execute(()->{
    try {
     originalUri=MediaFiles.publish(this,source,video,captureName+"_original."+(video?"mp4":"jpg"));originalPublished=true;
+    if(!video)getSharedPreferences("luma",0).edit().putString("shareOriginal",originalUri.toString()).apply();
     output=new File(getCacheDir(),"enhanced_"+MediaFiles.stamp()+(video?".mp4":".jpg"));
     if(video){
      VideoAnalyzer.Result analysis=VideoAnalyzer.analyze(source,stabilize,s->status(s,true));

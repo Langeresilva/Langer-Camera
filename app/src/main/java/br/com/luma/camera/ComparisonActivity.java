@@ -25,8 +25,10 @@ public class ComparisonActivity extends Activity {
   image=new ImageView(this);image.setScaleType(ImageView.ScaleType.FIT_CENTER);root.addView(image,new LinearLayout.LayoutParams(-1,0,1));
   TextView note=new TextView(this);note.setText("Mesma captura, sem e com tratamento.\nAs duas imagens também ficam salvas na pasta Langer da galeria.");note.setTextColor(0xffa4afba);note.setGravity(Gravity.CENTER);root.addView(note);
   Button toggle=new Button(this);toggle.setText("Alternar Original / Tratada");root.addView(toggle);toggle.setOnClickListener(v->{showingOriginal=!showingOriginal;showImage();});
+  Button share=new Button(this);share.setText("Enviar original ao ChatGPT");root.addView(share);
   Button back=new Button(this);back.setText("Voltar à câmera");root.addView(back);back.setOnClickListener(v->finish());
   String a=getSharedPreferences("luma",0).getString("photoOriginal",null),b=getSharedPreferences("luma",0).getString("photoTreated",null);
+  share.setEnabled(a!=null);share.setOnClickListener(v->ChatGptShare.show(this,Uri.parse(a)));
   if(a==null||b==null){label.setText("Tire uma nova foto para comparar");return;}
   worker.execute(()->{Bitmap first=null,second=null;try{
    first=load(Uri.parse(a));second=load(Uri.parse(b));final Bitmap loadedA=first,loadedB=second;

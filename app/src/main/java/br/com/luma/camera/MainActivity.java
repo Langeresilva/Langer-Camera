@@ -111,8 +111,11 @@ public class MainActivity extends ComponentActivity {
   gallery=button("Galeria");controls.addView(gallery,new LinearLayout.LayoutParams(0,dp(46),1));gallery.setOnClickListener(v->openGallery());
   status=text("Abrindo câmera…",12,MUTED);status.setGravity(Gravity.CENTER);status.setMinHeight(dp(40));root.addView(status,new LinearLayout.LayoutParams(-1,-2));
   info=button("Recursos e recuperação");info.setTextSize(11);root.addView(info,new LinearLayout.LayoutParams(-1,dp(38)));info.setOnClickListener(v->showInfo());
-  Button compare=button("Comparar fotos · Original / Tratada");root.addView(compare,new LinearLayout.LayoutParams(-1,dp(42)));
+  LinearLayout photoActions=new LinearLayout(this);root.addView(photoActions,new LinearLayout.LayoutParams(-1,dp(48)));
+  Button compare=button("Comparar fotos");photoActions.addView(compare,new LinearLayout.LayoutParams(0,-1,1));
   compare.setOnClickListener(v->startActivity(new Intent(this,ComparisonActivity.class)));
+  Button share=button("Enviar ao ChatGPT");LinearLayout.LayoutParams shareParams=new LinearLayout.LayoutParams(0,-1,1);shareParams.leftMargin=dp(6);photoActions.addView(share,shareParams);
+  share.setOnClickListener(v->{if(recording!=null||capturing){toast("Finalize a captura antes de compartilhar.");return;}ChatGptShare.latest(this);});
   Button updates=button("Verificar atualização");root.addView(updates,new LinearLayout.LayoutParams(-1,dp(40)));
   updates.setOnClickListener(v->{if(recording!=null||capturing||getSharedPreferences("luma",0).getBoolean("busy",false)){toast("Finalize a captura e o tratamento antes de atualizar.");return;}startActivity(new Intent(this,UpdaterActivity.class));});
   updateModes();
@@ -199,7 +202,7 @@ public class MainActivity extends ComponentActivity {
  private void showInfo(){
   SensorManager sm=(SensorManager)getSystemService(SENSOR_SERVICE);boolean gyro=sm.getDefaultSensor(Sensor.TYPE_GYROSCOPE)!=null;
   SharedPreferences p=getSharedPreferences("luma",0);
-  String message="Versão de teste 0.1.5\n"+Build.MANUFACTURER+" "+Build.MODEL+" · Android "+Build.VERSION.RELEASE+"\n\n"+cameraNote+"Giroscópio: "+(gyro?"detectado; ainda não usado nesta versão":"não detectado")+"\n\nFotos: ajuste conservador de luz com preservação das cores. Esta versão não contém modelo neural de IA.\n\nVídeo: análise a 15 amostras/s, suavização de deslocamento e rotação; recorte de 20% na imagem quando estabilizada. Cor e brilho consistentes no vídeo. Corrida intensa, baixa luz e objetos próximos podem limitar o resultado.\n\nProcessamento 100% local, sem internet. Originais e resultados ficam na pasta Langer da galeria. Não apague o original antes de conferir o resultado.\n\nAo sair, uma gravação é finalizada. O tratamento continua pela notificação, que permite cancelar. Se o Android encerrar o app, recupere as capturas aqui.\n\nBibliotecas: AndroidX/Media3 (Apache 2.0), OpenCV 4.12 (Apache 2.0).";
+  String message="Versão de teste 0.1.6\n"+Build.MANUFACTURER+" "+Build.MODEL+" · Android "+Build.VERSION.RELEASE+"\n\n"+cameraNote+"Giroscópio: "+(gyro?"detectado; ainda não usado nesta versão":"não detectado")+"\n\nFotos: ajuste conservador de luz com preservação das cores. Esta versão não contém modelo neural de IA.\n\nVídeo: análise a 15 amostras/s, suavização de deslocamento e rotação; recorte de 20% na imagem quando estabilizada. Cor e brilho consistentes no vídeo. Corrida intensa, baixa luz e objetos próximos podem limitar o resultado.\n\nProcessamento 100% local, sem internet. Originais e resultados ficam na pasta Langer da galeria. Não apague o original antes de conferir o resultado.\n\nAo sair, uma gravação é finalizada. O tratamento continua pela notificação, que permite cancelar. Se o Android encerrar o app, recupere as capturas aqui.\n\nBibliotecas: AndroidX/Media3 (Apache 2.0), OpenCV 4.12 (Apache 2.0).";
   AlertDialog.Builder dialog=new AlertDialog.Builder(this).setTitle("Langer · recursos reais").setMessage(message).setPositiveButton("Fechar",null);
   if(p.getBoolean("busy",false))dialog.setNegativeButton("Cancelar tratamento",(d,w)->startService(new Intent(this,ProcessingService.class).setAction("cancel")));
   else dialog.setNeutralButton("Recuperar capturas",(d,w)->recoverCaptures());
