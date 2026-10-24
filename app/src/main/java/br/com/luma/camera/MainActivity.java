@@ -5,7 +5,10 @@ import android.app.*;
 import android.content.*;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.graphics.Bitmap;
+import android.content.res.ColorStateList;
 import android.graphics.drawable.GradientDrawable;
+import android.graphics.drawable.RippleDrawable;
 import android.hardware.camera2.*;
 import android.hardware.*;
 import android.net.Uri;
@@ -27,10 +30,18 @@ import java.util.concurrent.*;
 
 @androidx.annotation.OptIn(markerClass=androidx.camera.camera2.interop.ExperimentalCamera2Interop.class)
 public class MainActivity extends ComponentActivity {
- private static final int INK=0xff0a1119,MINT=0xffa5f2d1,TEXT=0xfff1f5f8,MUTED=0xffa4afba;
+ private static final int INK=0xff091311,MINT=0xff9ee5cf,TEXT=0xffedf7f1,MUTED=0xff94aaa1;
  private PreviewView preview;
- private TextView status,badge,timer,modeLabel;
- private Button shutter,flip,photoMode,videoMode,gallery,info;
+ private TextView status,badge,timer,modeLabel,thumbnailLabel,captureNotice;
+ private Button flip,photoMode,videoMode,gallery,info;
+ private ShutterButton shutter;
+ private ImageView thumbnail;
+ private View captureFlash,focusRing;
+ private FrameLayout viewfinder;
+ private Bitmap thumbnailBitmap;
+ private String thumbnailUri;
+ private int thumbnailGeneration;
+ private boolean destroyed;
  private Switch stabilize;
  private ProcessCameraProvider provider;
  private ImageCapture imageCapture;
@@ -56,7 +67,9 @@ public class MainActivity extends ComponentActivity {
   photoMode.setEnabled(recording==null&&!capturing&&!busy&&!binding);
   videoMode.setEnabled(recording==null&&!capturing&&!busy&&!binding);
   stabilize.setEnabled(recording==null&&!busy&&!capturing&&!binding);
-  gallery.setEnabled(recording==null&&!capturing);
+  gallery.setEnabled(recording==null&&!capturing&&!busy);
+  if(!busy&&!capturing&&recording==null)refreshThumbnail(p.getString("lastUri",null));
+  shutter.invalidate();
   if(resumed)handler.postDelayed(this,500);
  }};
  @Override public void onCreate(Bundle state){
@@ -81,48 +94,97 @@ public class MainActivity extends ComponentActivity {
  private int dp(float v){return (int)(getResources().getDisplayMetrics().density*v+.5f);}
  private TextView text(String value,int size,int color){TextView t=new TextView(this);t.setText(value);t.setTextSize(size);t.setTextColor(color);return t;}
  private GradientDrawable shape(int color,int radius){GradientDrawable d=new GradientDrawable();d.setColor(color);d.setCornerRadius(dp(radius));return d;}
- private Button button(String value){Button b=new Button(this);b.setText(value);b.setAllCaps(false);b.setTextSize(13);b.setTextColor(TEXT);b.setBackground(shape(0xff1c2834,18));b.setMinHeight(dp(44));return b;}
+ private android.graphics.drawable.Drawable surface(int color,int radius,int stroke){GradientDrawable d=shape(color,radius);if(stroke!=0)d.setStroke(dp(1),stroke);return new RippleDrawable(ColorStateList.valueOf(0x269ee5cf),d,null);}
+ private Button button(String value){Button b=new Button(this);b.setText(value);b.setAllCaps(false);b.setTextSize(13);b.setTextColor(new ColorStateList(new int[][]{new int[]{-android.R.attr.state_enabled},new int[]{}},new int[]{0xff597068,TEXT}));b.setBackground(surface(0xff15251f,16,0xff294036));b.setMinHeight(dp(44));b.setMinWidth(0);b.setPadding(dp(12),0,dp(12),0);return b;}
+ private void glyph(Button b,String name,int color){CameraGlyph icon=new CameraGlyph(name,color);icon.setBounds(0,0,dp(22),dp(22));b.setCompoundDrawables(icon,null,null,null);b.setCompoundDrawablePadding(dp(10));}
  private void buildUi(){
   LinearLayout root=new LinearLayout(this);root.setOrientation(LinearLayout.VERTICAL);root.setBackgroundColor(INK);
-  root.setPadding(dp(16),dp(6),dp(16),dp(8));setContentView(root);
-  root.setOnApplyWindowInsetsListener((v,insets)->{android.graphics.Insets bars=insets.getInsets(WindowInsets.Type.systemBars());v.setPadding(dp(16)+bars.left,dp(6)+bars.top,dp(16)+bars.right,dp(8)+bars.bottom);return insets;});
-  LinearLayout header=new LinearLayout(this);header.setGravity(Gravity.CENTER_VERTICAL);root.addView(header,new LinearLayout.LayoutParams(-1,dp(48)));
-  TextView title=text("LANGER",26,TEXT);title.setLetterSpacing(.15f);header.addView(title,new LinearLayout.LayoutParams(0,-2,1));
-  TextView offline=text("●  OFFLINE",11,MINT);offline.setLetterSpacing(.1f);header.addView(offline);
-  TextView sub=text("Sua luz. Seu movimento.",13,MUTED);root.addView(sub);
-  FrameLayout viewfinder=new FrameLayout(this);LinearLayout.LayoutParams vf=new LinearLayout.LayoutParams(-1,0,1);vf.topMargin=dp(14);vf.bottomMargin=dp(12);root.addView(viewfinder,vf);
+  root.setPadding(dp(18),dp(6),dp(18),dp(8));setContentView(root);
+  root.setOnApplyWindowInsetsListener((v,insets)->{android.graphics.Insets bars=insets.getInsets(WindowInsets.Type.systemBars());v.setPadding(dp(18)+bars.left,dp(6)+bars.top,dp(18)+bars.right,dp(8)+bars.bottom);return insets;});
+  LinearLayout header=new LinearLayout(this);header.setGravity(Gravity.CENTER_VERTICAL);root.addView(header,new LinearLayout.LayoutParams(-1,dp(54)));
+  ImageView mark=new ImageView(this);mark.setImageResource(R.drawable.ic_launcher_foreground);header.addView(mark,new LinearLayout.LayoutParams(dp(48),dp(48)));
+  LinearLayout brand=new LinearLayout(this);brand.setOrientation(LinearLayout.VERTICAL);header.addView(brand,new LinearLayout.LayoutParams(0,-2,1));
+  TextView title=text("LANGER",21,TEXT);title.setLetterSpacing(.16f);brand.addView(title);
+  TextView sub=text("Encontre sua melhor luz",11,MUTED);brand.addView(sub);
+  info=button("");info.setPadding(dp(13),dp(13),dp(13),dp(13));info.setContentDescription("Opções: atualizações, recursos e recuperação");CameraGlyph menu=new CameraGlyph("menu",MINT);menu.setBounds(0,0,dp(22),dp(22));info.setCompoundDrawables(menu,null,null,null);header.addView(info,new LinearLayout.LayoutParams(dp(48),dp(48)));info.setOnClickListener(v->showOptions());
+  viewfinder=new FrameLayout(this);viewfinder.setBackground(shape(0xff030907,26));viewfinder.setClipToOutline(true);LinearLayout.LayoutParams vf=new LinearLayout.LayoutParams(-1,0,1);vf.topMargin=dp(8);vf.bottomMargin=dp(10);root.addView(viewfinder,vf);
   preview=new PreviewView(this);preview.setImplementationMode(PreviewView.ImplementationMode.COMPATIBLE);preview.setScaleType(PreviewView.ScaleType.FIT_CENTER);viewfinder.addView(preview,new FrameLayout.LayoutParams(-1,-1));
-  badge=text("Câmera traseira",11,TEXT);badge.setPadding(dp(12),dp(8),dp(12),dp(8));badge.setBackground(shape(0xa8101923,12));FrameLayout.LayoutParams bp=new FrameLayout.LayoutParams(-2,-2,Gravity.TOP|Gravity.LEFT);bp.setMargins(dp(10),dp(10),0,0);viewfinder.addView(badge,bp);
-  timer=text("",15,0xffff8686);FrameLayout.LayoutParams tp=new FrameLayout.LayoutParams(-2,-2,Gravity.TOP|Gravity.RIGHT);tp.setMargins(0,dp(14),dp(14),0);viewfinder.addView(timer,tp);
+  badge=text("Câmera traseira",11,TEXT);badge.setPadding(dp(12),dp(8),dp(12),dp(8));badge.setBackground(shape(0xb30c2018,18));FrameLayout.LayoutParams bp=new FrameLayout.LayoutParams(-2,-2,Gravity.TOP|Gravity.START);bp.setMargins(dp(12),dp(12),0,0);viewfinder.addView(badge,bp);
+  timer=text("",14,0xffffa09b);timer.setPadding(dp(10),dp(6),dp(10),dp(6));FrameLayout.LayoutParams tp=new FrameLayout.LayoutParams(-2,-2,Gravity.TOP|Gravity.END);tp.setMargins(0,dp(12),dp(10),0);viewfinder.addView(timer,tp);
+  focusRing=new View(this);GradientDrawable focusShape=shape(Color.TRANSPARENT,14);focusShape.setStroke(dp(1.5f),MINT);focusRing.setBackground(focusShape);focusRing.setVisibility(View.GONE);viewfinder.addView(focusRing,new FrameLayout.LayoutParams(dp(58),dp(58)));
+  captureNotice=text("Foto capturada",13,INK);captureNotice.setGravity(Gravity.CENTER);captureNotice.setPadding(dp(18),dp(9),dp(18),dp(9));captureNotice.setBackground(shape(MINT,20));captureNotice.setVisibility(View.GONE);FrameLayout.LayoutParams np=new FrameLayout.LayoutParams(-2,-2,Gravity.CENTER);viewfinder.addView(captureNotice,np);
   preview.setOnTouchListener((v,event)->{if(event.getAction()==MotionEvent.ACTION_UP&&provider!=null&&recording==null){
    try{if(activeCamera==null)return true;
     MeteringPoint point=preview.getMeteringPointFactory().createPoint(event.getX(),event.getY());activeCamera.getCameraControl().startFocusAndMetering(new FocusMeteringAction.Builder(point).setAutoCancelDuration(3,TimeUnit.SECONDS).build());
-    Toast.makeText(this,"Ajustando foco e exposição",Toast.LENGTH_SHORT).show();
+    showFocus(event.getX(),event.getY());
    }catch(Exception ignored){}v.performClick();}return true;});
-  LinearLayout modes=new LinearLayout(this);modes.setGravity(Gravity.CENTER);root.addView(modes);
-  photoMode=button("Foto");videoMode=button("Vídeo");LinearLayout.LayoutParams modeParams=new LinearLayout.LayoutParams(dp(110),dp(42));modeParams.setMargins(dp(5),0,dp(5),0);modes.addView(photoMode,modeParams);modes.addView(videoMode,new LinearLayout.LayoutParams(modeParams));
+  LinearLayout modes=new LinearLayout(this);modes.setGravity(Gravity.CENTER);FrameLayout.LayoutParams modesPosition=new FrameLayout.LayoutParams(-1,dp(48),Gravity.BOTTOM|Gravity.CENTER_HORIZONTAL);modesPosition.bottomMargin=dp(10);viewfinder.addView(modes,modesPosition);
+  photoMode=button("Foto");videoMode=button("Vídeo");glyph(photoMode,"camera",INK);glyph(videoMode,"video",MUTED);LinearLayout.LayoutParams modeParams=new LinearLayout.LayoutParams(dp(124),dp(44));modeParams.setMargins(dp(4),0,dp(4),0);modes.addView(photoMode,modeParams);modes.addView(videoMode,new LinearLayout.LayoutParams(modeParams));
   photoMode.setOnClickListener(v->setMode(false));videoMode.setOnClickListener(v->setMode(true));
-  modeLabel=text("",12,MUTED);modeLabel.setGravity(Gravity.CENTER);LinearLayout.LayoutParams ml=new LinearLayout.LayoutParams(-1,-2);ml.topMargin=dp(10);root.addView(modeLabel,ml);
+  modeLabel=text("",10,TEXT);modeLabel.setGravity(Gravity.CENTER);modeLabel.setPadding(dp(10),dp(5),dp(10),dp(5));modeLabel.setBackground(shape(0x990c2018,12));FrameLayout.LayoutParams ml=new FrameLayout.LayoutParams(-2,-2,Gravity.TOP|Gravity.CENTER_HORIZONTAL);ml.topMargin=dp(54);viewfinder.addView(modeLabel,ml);
   stabilize=new Switch(this);stabilize.setText("Estabilizar após gravar");stabilize.setTextSize(13);stabilize.setTextColor(TEXT);stabilize.setChecked(getSharedPreferences("luma",0).getBoolean("stabilize",true));root.addView(stabilize,new LinearLayout.LayoutParams(-1,dp(40)));
   stabilize.setOnCheckedChangeListener((b,on)->getSharedPreferences("luma",0).edit().putBoolean("stabilize",on).apply());
-  LinearLayout controls=new LinearLayout(this);controls.setGravity(Gravity.CENTER_VERTICAL);LinearLayout.LayoutParams cp=new LinearLayout.LayoutParams(-1,dp(80));cp.topMargin=dp(4);root.addView(controls,cp);
-  flip=button("Virar");controls.addView(flip,new LinearLayout.LayoutParams(0,dp(46),1));flip.setOnClickListener(v->{front=!front;bindCamera();});
-  shutter=button("●");shutter.setTextSize(36);shutter.setTextColor(INK);shutter.setBackground(shape(MINT,40));LinearLayout.LayoutParams sp=new LinearLayout.LayoutParams(dp(76),dp(76));sp.setMargins(dp(22),0,dp(22),0);controls.addView(shutter,sp);shutter.setOnClickListener(v->{if(videoModeSelected)toggleVideo();else capturePhoto();});
-  gallery=button("Galeria");controls.addView(gallery,new LinearLayout.LayoutParams(0,dp(46),1));gallery.setOnClickListener(v->openGallery());
-  status=text("Abrindo câmera…",12,MUTED);status.setGravity(Gravity.CENTER);status.setMinHeight(dp(40));root.addView(status,new LinearLayout.LayoutParams(-1,-2));
-  info=button("Recursos e recuperação");info.setTextSize(11);root.addView(info,new LinearLayout.LayoutParams(-1,dp(38)));info.setOnClickListener(v->showInfo());
-  Button share=button("Enviar foto tratada ao ChatGPT");root.addView(share,new LinearLayout.LayoutParams(-1,dp(46)));
+  LinearLayout controls=new LinearLayout(this);controls.setGravity(Gravity.CENTER_VERTICAL);LinearLayout.LayoutParams cp=new LinearLayout.LayoutParams(-1,dp(100));cp.topMargin=dp(4);root.addView(controls,cp);
+  LinearLayout album=new LinearLayout(this);album.setOrientation(LinearLayout.VERTICAL);album.setGravity(Gravity.CENTER);controls.addView(album,new LinearLayout.LayoutParams(0,-1,1));
+  FrameLayout thumbnailFrame=new FrameLayout(this);thumbnailFrame.setBackground(shape(0xff1b3027,16));thumbnailFrame.setClipToOutline(true);album.addView(thumbnailFrame,new LinearLayout.LayoutParams(dp(60),dp(60)));
+  thumbnail=new ImageView(this);thumbnail.setScaleType(ImageView.ScaleType.CENTER_CROP);thumbnail.setImageDrawable(new CameraGlyph("gallery",MINT));thumbnail.setPadding(dp(16),dp(16),dp(16),dp(16));thumbnail.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);thumbnailFrame.addView(thumbnail,new FrameLayout.LayoutParams(-1,-1));
+  gallery=button("");gallery.setBackground(surface(Color.TRANSPARENT,16,0xff587766));gallery.setContentDescription("Abrir última captura na galeria");thumbnailFrame.addView(gallery,new FrameLayout.LayoutParams(-1,-1));gallery.setOnClickListener(v->openGallery());
+  thumbnailLabel=text("Galeria",10,MUTED);thumbnailLabel.setGravity(Gravity.CENTER);thumbnailLabel.setPadding(0,dp(5),0,0);album.addView(thumbnailLabel);
+  shutter=new ShutterButton(this);controls.addView(shutter,new LinearLayout.LayoutParams(dp(96),dp(96)));shutter.setOnClickListener(v->{if(videoModeSelected)toggleVideo();else capturePhoto();});
+  LinearLayout cameraFlip=new LinearLayout(this);cameraFlip.setOrientation(LinearLayout.VERTICAL);cameraFlip.setGravity(Gravity.CENTER);controls.addView(cameraFlip,new LinearLayout.LayoutParams(0,-1,1));
+  flip=button("");flip.setPadding(dp(18),dp(18),dp(18),dp(18));flip.setBackground(surface(0xff15251f,30,0xff345143));CameraGlyph flipIcon=new CameraGlyph("flip",MINT);flipIcon.setBounds(0,0,dp(24),dp(24));flip.setCompoundDrawables(flipIcon,null,null,null);flip.setContentDescription("Alternar câmera frontal e traseira");cameraFlip.addView(flip,new LinearLayout.LayoutParams(dp(60),dp(60)));flip.setOnClickListener(v->{flip.animate().rotationBy(180).setDuration(220).start();front=!front;bindCamera();});TextView flipLabel=text("Virar câmera",10,MUTED);flipLabel.setPadding(0,dp(5),0,0);cameraFlip.addView(flipLabel);
+  status=text("Abrindo câmera…",11,TEXT);status.setGravity(Gravity.CENTER);status.setPadding(dp(12),dp(7),dp(12),dp(7));status.setBackground(shape(0xb30c2018,14));status.setMaxLines(3);FrameLayout.LayoutParams statusPosition=new FrameLayout.LayoutParams(-2,-2,Gravity.BOTTOM|Gravity.CENTER_HORIZONTAL);statusPosition.bottomMargin=dp(66);statusPosition.leftMargin=dp(12);statusPosition.rightMargin=dp(12);viewfinder.addView(status,statusPosition);
+  Button share=button("Melhorar no ChatGPT");glyph(share,"spark",MINT);share.setBackground(surface(0xff14372c,18,0xff426a57));root.addView(share,new LinearLayout.LayoutParams(-1,dp(52)));
   share.setOnClickListener(v->{if(recording!=null||capturing){toast("Finalize a captura antes de compartilhar.");return;}ChatGptShare.latest(this);});
-  Button updates=button("Verificar atualização");root.addView(updates,new LinearLayout.LayoutParams(-1,dp(40)));
-  updates.setOnClickListener(v->{if(recording!=null||capturing||getSharedPreferences("luma",0).getBoolean("busy",false)){toast("Finalize a captura e o tratamento antes de atualizar.");return;}startActivity(new Intent(this,UpdaterActivity.class));});
+  captureFlash=new View(this);captureFlash.setBackgroundColor(0xffe4fff0);captureFlash.setVisibility(View.GONE);viewfinder.addView(captureFlash,new FrameLayout.LayoutParams(-1,-1));
   updateModes();
  }
  private void setMode(boolean video){videoModeSelected=video;updateModes();bindCamera();}
+ private void showOptions(){
+  new AlertDialog.Builder(this).setTitle("Langer Câmera").setItems(new String[]{"Verificar atualização","Recursos e recuperação"},(d,choice)->{
+   if(choice==1){showInfo();return;}
+   if(recording!=null||capturing||getSharedPreferences("luma",0).getBoolean("busy",false)){toast("Finalize a captura e o tratamento antes de atualizar.");return;}
+   startActivity(new Intent(this,UpdaterActivity.class));
+  }).setNegativeButton("Fechar",null).show();
+ }
+ private void showFocus(float x,float y){
+  focusRing.animate().cancel();FrameLayout.LayoutParams params=(FrameLayout.LayoutParams)focusRing.getLayoutParams();
+  params.leftMargin=(int)Math.max(0,Math.min(viewfinder.getWidth()-dp(58),x-dp(29)));params.topMargin=(int)Math.max(0,Math.min(viewfinder.getHeight()-dp(58),y-dp(29)));focusRing.setLayoutParams(params);
+  focusRing.setVisibility(View.VISIBLE);focusRing.setAlpha(1);focusRing.setScaleX(1.25f);focusRing.setScaleY(1.25f);focusRing.animate().scaleX(1).scaleY(1).alpha(0).setStartDelay(300).setDuration(700).withEndAction(()->focusRing.setVisibility(View.GONE)).start();
+ }
+ private void captureFeedback(File file){
+  if(destroyed)return;
+  if(resumed){
+   captureFlash.animate().cancel();captureFlash.setVisibility(View.VISIBLE);captureFlash.setAlpha(.55f);captureFlash.animate().alpha(0).setStartDelay(0).setDuration(210).withEndAction(()->captureFlash.setVisibility(View.GONE)).start();
+   captureNotice.animate().cancel();captureNotice.setText("Foto capturada · preparando");captureNotice.setVisibility(View.VISIBLE);captureNotice.setAlpha(1);captureNotice.setTranslationY(dp(8));captureNotice.animate().translationY(0).setStartDelay(0).setDuration(150).withEndAction(()->captureNotice.animate().alpha(0).setStartDelay(1400).setDuration(220).withEndAction(()->captureNotice.setVisibility(View.GONE)).start()).start();
+   shutter.performHapticFeedback(HapticFeedbackConstants.CONFIRM);
+  }
+  thumbnailLabel.setText("Processando…");thumbnailUri=null;int generation=++thumbnailGeneration;
+  try{
+   // Open before the processing service can remove the temporary capture.
+   FileInputStream stream=new FileInputStream(file);
+   try{io.execute(()->{try(stream){Bitmap bitmap=CaptureThumbnail.read(stream);runOnUiThread(()->applyThumbnail(bitmap,generation,true));}catch(Exception ignored){}});}
+   catch(RejectedExecutionException e){stream.close();}
+  }catch(IOException ignored){}
+ }
+ private void refreshThumbnail(String uri){
+  thumbnailLabel.setText("Galeria");
+  if(uri==null){if(thumbnailBitmap!=null){thumbnailBitmap=null;thumbnail.setImageDrawable(new CameraGlyph("gallery",MINT));thumbnail.setPadding(dp(16),dp(16),dp(16),dp(16));}return;}
+  if(uri==null||uri.equals(thumbnailUri)||destroyed)return;thumbnailUri=uri;int generation=++thumbnailGeneration;
+  io.execute(()->{try{Bitmap bitmap=getContentResolver().loadThumbnail(Uri.parse(uri),new Size(180,180),null);runOnUiThread(()->applyThumbnail(bitmap,generation,false));}
+   catch(Exception e){runOnUiThread(()->{if(!destroyed&&generation==thumbnailGeneration){thumbnailUri=null;}});}});
+ }
+ private void applyThumbnail(Bitmap bitmap,int generation,boolean pending){
+  if(destroyed||generation!=thumbnailGeneration){bitmap.recycle();return;}
+  thumbnailBitmap=bitmap;thumbnail.setPadding(0,0,0,0);thumbnail.setImageBitmap(bitmap);gallery.setContentDescription(pending?"Foto capturada; tratamento em andamento":"Abrir última captura na galeria");
+  thumbnail.animate().cancel();thumbnail.setScaleX(.88f);thumbnail.setScaleY(.88f);thumbnail.animate().scaleX(1).scaleY(1).setDuration(220).start();
+ }
  private void updateModes(){
-  photoMode.setTextColor(videoModeSelected?MUTED:INK);photoMode.setBackground(shape(videoModeSelected?0xff1c2834:MINT,18));
-  videoMode.setTextColor(videoModeSelected?INK:MUTED);videoMode.setBackground(shape(videoModeSelected?MINT:0xff1c2834,18));
+  photoMode.setTextColor(videoModeSelected?MUTED:INK);photoMode.setBackground(surface(videoModeSelected?0xff15251f:MINT,14,0));glyph(photoMode,"camera",videoModeSelected?MUTED:INK);
+  videoMode.setTextColor(videoModeSelected?INK:MUTED);videoMode.setBackground(surface(videoModeSelected?MINT:0xff15251f,14,0));glyph(videoMode,"video",videoModeSelected?INK:MUTED);
+  shutter.setVideoMode(videoModeSelected);
   stabilize.setVisibility(videoModeSelected?View.VISIBLE:View.GONE);
-  modeLabel.setText(videoModeSelected?"1080p · tratamento após gravar · original preservado":"Luz e cores automáticas · somente foto tratada");
+  modeLabel.setText(videoModeSelected?"FULL HD · estabilização após gravar":"Luz equilibrada · foto tratada no aparelho");
  }
  private void loadCamera(){
   if(loadingCamera)return;loadingCamera=true;
@@ -157,10 +219,10 @@ public class MainActivity extends ComponentActivity {
   }catch(Exception e){error("Falha ao configurar câmera",e);}finally{binding=false;}
  }
  private void capturePhoto(){
-  if(imageCapture==null||capturing)return;capturing=true;status.setText("Capturando…");
+  if(imageCapture==null||capturing)return;capturing=true;shutter.setEnabled(false);status.setText("Capturando…");
   File file=new File(getFilesDir(),"photo_"+MediaFiles.stamp()+".jpg");
   imageCapture.takePicture(new ImageCapture.OutputFileOptions.Builder(file).build(),ContextCompat.getMainExecutor(this),new ImageCapture.OnImageSavedCallback(){
-   public void onImageSaved(ImageCapture.OutputFileResults result){capturing=false;process(file,false);}
+   public void onImageSaved(ImageCapture.OutputFileResults result){capturing=false;captureFeedback(file);process(file,false);}
    public void onError(ImageCaptureException e){capturing=false;error("Não foi possível tirar a foto",e);}
   });
  }
@@ -173,9 +235,9 @@ public class MainActivity extends ComponentActivity {
    boolean audio=checkSelfPermission(Manifest.permission.RECORD_AUDIO)==PackageManager.PERMISSION_GRANTED;
    if(audio)pending=pending.withAudioEnabled();else toast("Gravando sem áudio. Ative o microfone nas permissões para ter som.");
    recording=pending.start(ContextCompat.getMainExecutor(this),event->{
-    if(event instanceof VideoRecordEvent.Start){recordStart=SystemClock.elapsedRealtime();shutter.setText("■");shutter.setTextSize(28);shutter.setBackground(shape(0xffff8888,40));status.setText("Gravando · toque no quadrado para finalizar");}
+    if(event instanceof VideoRecordEvent.Start){recordStart=SystemClock.elapsedRealtime();shutter.setRecording(true);timer.setBackground(shape(0xb33e1719,16));status.setText("Gravando · toque no quadrado para finalizar");}
     if(event instanceof VideoRecordEvent.Finalize){
-     VideoRecordEvent.Finalize end=(VideoRecordEvent.Finalize)event;recording=null;timer.setText("");shutter.setText("●");shutter.setTextSize(36);shutter.setBackground(shape(MINT,40));
+     VideoRecordEvent.Finalize end=(VideoRecordEvent.Finalize)event;recording=null;timer.setText("");timer.setBackgroundColor(Color.TRANSPARENT);shutter.setRecording(false);
      if(!end.hasError()||end.getError()==VideoRecordEvent.Finalize.ERROR_SOURCE_INACTIVE||end.getError()==VideoRecordEvent.Finalize.ERROR_DURATION_LIMIT_REACHED){
       if(recordingFile.length()>0){if(resumed)process(recordingFile,true);else preservePending(recordingFile,true);}
      }else{preservePending(recordingFile,true);error("A gravação foi interrompida; arquivo preservado",end.getCause());}
@@ -199,7 +261,7 @@ public class MainActivity extends ComponentActivity {
  private void showInfo(){
   SensorManager sm=(SensorManager)getSystemService(SENSOR_SERVICE);boolean gyro=sm.getDefaultSensor(Sensor.TYPE_GYROSCOPE)!=null;
   SharedPreferences p=getSharedPreferences("luma",0);
-  String message="Versão de teste 0.1.8\n"+Build.MANUFACTURER+" "+Build.MODEL+" · Android "+Build.VERSION.RELEASE+"\n\n"+cameraNote+"Giroscópio: "+(gyro?"detectado; ainda não usado nesta versão":"não detectado")+"\n\nFotos: ajuste conservador de luz com preservação das cores. Esta versão não contém modelo neural de IA.\n\nVídeo: análise a 15 amostras/s, suavização de deslocamento e rotação; recorte de 20% na imagem quando estabilizada. Cor e brilho consistentes no vídeo. Corrida intensa, baixa luz e objetos próximos podem limitar o resultado.\n\nProcessamento 100% local, sem internet. Fotos: somente a tratada é salva na galeria. Vídeos: original e resultado ficam na pasta Langer.\n\nAo sair, uma gravação é finalizada. O tratamento continua pela notificação, que permite cancelar. Se o Android encerrar o app, recupere as capturas aqui.\n\nBibliotecas: AndroidX/Media3 (Apache 2.0), OpenCV 4.12 (Apache 2.0).";
+  String message="Versão de teste 0.1.9\n"+Build.MANUFACTURER+" "+Build.MODEL+" · Android "+Build.VERSION.RELEASE+"\n\n"+cameraNote+"Giroscópio: "+(gyro?"detectado; ainda não usado nesta versão":"não detectado")+"\n\nFotos: ajuste conservador de luz com preservação das cores. Esta versão não contém modelo neural de IA.\n\nVídeo: análise a 15 amostras/s, suavização de deslocamento e rotação; recorte de 20% na imagem quando estabilizada. Cor e brilho consistentes no vídeo. Corrida intensa, baixa luz e objetos próximos podem limitar o resultado.\n\nProcessamento 100% local, sem internet. Fotos: somente a tratada é salva na galeria. Vídeos: original e resultado ficam na pasta Langer.\n\nAo sair, uma gravação é finalizada. O tratamento continua pela notificação, que permite cancelar. Se o Android encerrar o app, recupere as capturas aqui.\n\nBibliotecas: AndroidX/Media3 (Apache 2.0), OpenCV 4.12 (Apache 2.0).";
   AlertDialog.Builder dialog=new AlertDialog.Builder(this).setTitle("Langer · recursos reais").setMessage(message).setPositiveButton("Fechar",null);
   if(p.getBoolean("busy",false))dialog.setNegativeButton("Cancelar tratamento",(d,w)->startService(new Intent(this,ProcessingService.class).setAction("cancel")));
   else dialog.setNeutralButton("Recuperar capturas",(d,w)->recoverCaptures());
@@ -218,5 +280,5 @@ public class MainActivity extends ComponentActivity {
  @Override public void onRequestPermissionsResult(int request,String[] names,int[] grants){super.onRequestPermissionsResult(request,names,grants);if(request==41){if(checkSelfPermission(Manifest.permission.CAMERA)==PackageManager.PERMISSION_GRANTED)loadCamera();else new AlertDialog.Builder(this).setTitle("Permissão da câmera").setMessage("Permita o acesso à câmera nas configurações do Android para capturar fotos e vídeos.").setPositiveButton("Configurações",(d,w)->startActivity(new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,Uri.parse("package:"+getPackageName())))).setNegativeButton("Fechar",null).show();}}
  @Override protected void onResume(){super.onResume();resumed=true;handler.post(refresh);if(orientationListener!=null)orientationListener.enable();if(provider!=null)bindCamera();else if(checkSelfPermission(Manifest.permission.CAMERA)==PackageManager.PERMISSION_GRANTED)loadCamera();}
  @Override protected void onPause(){resumed=false;handler.removeCallbacks(refresh);if(orientationListener!=null)orientationListener.disable();if(recording!=null)recording.stop();super.onPause();}
- @Override protected void onDestroy(){handler.removeCallbacks(refresh);io.shutdown();super.onDestroy();}
+ @Override protected void onDestroy(){destroyed=true;thumbnailGeneration++;handler.removeCallbacks(refresh);captureFlash.animate().cancel();captureNotice.animate().cancel();focusRing.animate().cancel();thumbnail.animate().cancel();thumbnail.setImageDrawable(null);thumbnailBitmap=null;io.shutdown();super.onDestroy();}
 }

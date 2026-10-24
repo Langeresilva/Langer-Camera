@@ -1,4 +1,4 @@
-# Langer Câmera — 0.1.8
+# Langer Câmera — 0.1.9
 
 Câmera Android desenvolvida para testes no Redmi Note 14 4G (24117RN76L), Android 16. Pacote: `br.com.luma.camera`. Sem anúncios, contas ou APIs pagas. Fotos e vídeos são processados no próprio aparelho. A internet é usada pelo atualizador quando solicitado.
 
@@ -74,3 +74,15 @@ O envio passa a usar ACTION_SEND direcionado a com.openai.chatgpt, sem criar o s
 ## Salvamento único — 0.1.8
 
 Novas fotos são tratadas antes da publicação e somente a versão tratada aparece na galeria. O original temporário privado é removido depois que a tratada é salva com sucesso; em falha ou cancelamento permanece recuperável. O comparador foi removido. O envio ao ChatGPT passa a usar photoTreated. Fotos antigas não são apagadas. Vídeos continuam preservando original e resultado. Compilação, 14 testes JVM e lint aprovados; salvamento único e compartilhamento precisam de validação no aparelho.
+
+## Interface e confirmação de captura — 0.1.9
+
+Visual em verde escuro com detalhes menta e dourado, visor maior e modos Foto/Vídeo sobrepostos ao visor. Novo ícone adaptativo com versão monocromática. Ícones dos controles são desenhados nativamente, sem depender de emojis. Disparador circular distingue foto, gravação e espera; oferece feedback de toque, e um brilho breve e uma confirmação aparecem depois que a câmera confirma o arquivo capturado.
+
+A miniatura provisória é decodificada do JPEG real, com orientação EXIF e memória limitada, e fica identificada como Processando. O arquivo é aberto antes de o serviço poder remover a captura temporária. Quando o tratamento acaba, a miniatura passa a mostrar a mídia publicada na galeria. A galeria aguarda o fim do tratamento para evitar abrir uma captura anterior. Fotos continuam gerando apenas a versão tratada.
+
+Verificar atualização e Recursos e recuperação ficam no menu de controles no canto superior direito. Há uma indicação visual ao tocar no visor para foco. As animações não disparam nova captura nem ligam a lanterna do aparelho.
+
+Compilação, 14 testes JVM e Android Lint sem erros; reconstrução do APK pelo delta e assinatura verificadas. A prévia do ícone abaixo foi renderizada a partir do vetor usado pelo app. O layout, as animações e miniaturas no Redmi ainda precisam de avaliação física; não há aparelho conectado por ADB e o emulador local não iniciou nas tentativas anteriores.
+
+![Ícone do Langer Câmera](docs/icone.png)
