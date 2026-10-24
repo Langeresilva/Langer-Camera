@@ -29,3 +29,7 @@ python tools/publish_release.py entrega/release-v0.1.4 --commit HASH_DO_COMMIT_P
 O publicador verifica permissão, cria uma release em rascunho, envia os arquivos e só então a torna pública. Os binários são assets da release, não arquivos do histórico Git. O script usa a credencial do Git Credential Manager em memória, sem gravá-la ou imprimi-la.
 
 Após publicar, conferir o manifesto HTTPS e os downloads do APK e delta. Só então considerar o canal operacional. A instalação pelo atualizador no Redmi ainda exige validação física.
+
+## Publicação concluída
+
+Release v0.1.4 publicada no GitHub. O endereço estável latest.json respondeu publicamente. APK e delta foram baixados novamente e comparados aos arquivos locais; o APK reconstruído do delta publicado teve hash idêntico e assinatura válida.
