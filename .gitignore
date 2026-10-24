@@ -6,3 +6,4 @@ local.properties
 *-log.txt
 /entrega/
 __pycache__/
+.codex-remote-attachments/

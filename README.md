@@ -1,4 +1,4 @@
-# Langer Câmera — 0.1.4
+# Langer Câmera — 0.1.5
 
 Câmera Android desenvolvida para testes no Redmi Note 14 4G (24117RN76L), Android 16. Pacote: `br.com.luma.camera`. Sem anúncios, contas ou APIs pagas. Fotos e vídeos são processados no próprio aparelho. A internet é usada pelo atualizador quando solicitado.
 
@@ -15,7 +15,7 @@ Canal oficial: `https://github.com/Langeresilva/Langer-Camera/releases/latest/do
 
 ## Recursos
 
-Captura frontal e traseira; toque para foco/exposição; fotos com tratamento adaptativo de iluminação, balanço de branco e cores; original e tratada preservadas na galeria com o mesmo identificador. O botão Comparar fotos alterna entre as duas versões da última captura concluída.
+Captura frontal e traseira; toque para foco/exposição; fotos com ajuste conservador de iluminação e preservação das cores; original e tratada preservadas na galeria com o mesmo identificador. O botão Comparar fotos alterna entre as duas versões da última captura concluída.
 
 Vídeo com áudio quando autorizado, preferência por Full HD a 30 fps, estabilização após a gravação por rastreamento de pontos e suavização da trajetória. O tratamento analisa 15 amostras por segundo, limita deslocamento/rotação e usa zoom 1,25, equivalente a recortar cerca de 20% da largura e da altura visíveis. Se o rastreamento for insuficiente, exporta sem estabilizar. Correção moderada de brilho e cor consistente na sequência.
 
@@ -47,10 +47,14 @@ O formato LGRD1 copia trechos do APK instalado e acrescenta os novos para recons
 
 ## Validação
 
-Oito testes JVM aprovados e Android Lint sem erros bloqueantes. APK e delta baixados novamente da release v0.1.4; hashes comparados e reconstrução com o leitor Java validada byte a byte, incluindo assinatura APK. O delta 0.1.3 para 0.1.4 tem 470.010 bytes; o APK tem 40.971.892 bytes.
+Quatorze testes JVM aprovados e Android Lint sem erros bloqueantes. APK e delta baixados novamente da release v0.1.4; hashes comparados e reconstrução com o leitor Java validada byte a byte, incluindo assinatura APK. O delta 0.1.3 para 0.1.4 tem 470.010 bytes; o APK tem 40.971.892 bytes.
 
 O teste Android `PipelineInstrumentation` foi compilado, mas não executado: o emulador local não iniciou e o aparelho não está conectado. Não confundir testes JVM ou de bancada com validação completa dos codecs e instalador no celular.
 
 ## Componentes
 
 CameraX 1.4.2, Activity 1.10.1, ExifInterface 1.4.1, Media3 1.6.1 e OpenCV 4.12.0. Avisos e licenças em THIRD_PARTY_NOTICES.md e nos assets do APK. Nenhum código ou APK de CapCut foi incorporado.
+
+## Correção fotográfica 0.1.5
+
+Remove o balanço de branco estimado pela média da cena: fundos de cor dominante podiam alterar a pele. Remove saturação forçada e gamma global agressivo. O tratamento aplica o mesmo ganho aos canais RGB, limitado a 12%, para levantar sombras/médios escuros sem modificar cores intencionalmente; preserva áreas claras e cenas bem expostas. Arredondamento, redução de resolução quando necessária e recompressão JPEG ainda podem causar pequenas diferenças. A nova aparência precisa ser avaliada no aparelho. As fotos pessoais fornecidas para diagnóstico não fazem parte do repositório.

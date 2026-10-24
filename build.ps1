@@ -13,6 +13,6 @@ try {
     & .\gradlew.bat assembleDebug assembleDebugAndroidTest testDebugUnitTest lintDebug --console=plain
     if ($LASTEXITCODE -ne 0) { throw 'Compilação ou verificação falhou.' }
     New-Item -ItemType Directory -Force entrega | Out-Null
-    Copy-Item -LiteralPath 'app\build\outputs\apk\debug\app-arm64-v8a-debug.apk' -Destination 'entrega\LangerCamera-0.1.4-arm64.apk'
-    Get-FileHash -Algorithm SHA256 'entrega\LangerCamera-0.1.4-arm64.apk'
+    Copy-Item -LiteralPath 'app\build\outputs\apk\debug\app-arm64-v8a-debug.apk' -Destination 'entrega\LangerCamera-0.1.5-arm64.apk'
+    Get-FileHash -Algorithm SHA256 'entrega\LangerCamera-0.1.5-arm64.apk'
 } finally { Pop-Location }
