@@ -141,7 +141,8 @@ public class MainActivity extends ComponentActivity {
  }
  private void setMode(boolean video){videoModeSelected=video;updateModes();bindCamera();}
  private void showOptions(){
-  new AlertDialog.Builder(this).setTitle("Langer Câmera").setItems(new String[]{"Verificar atualização","Recursos e recuperação"},(d,choice)->{
+  new AlertDialog.Builder(this).setTitle("Langer Câmera").setItems(new String[]{"Verificar atualização","Recursos e recuperação","Editar pedido ao ChatGPT"},(d,choice)->{
+   if(choice==2){ChatGptShare.editPrompt(this);return;}
    if(choice==1){showInfo();return;}
    if(recording!=null||capturing||getSharedPreferences("luma",0).getBoolean("busy",false)){toast("Finalize a captura e o tratamento antes de atualizar.");return;}
    startActivity(new Intent(this,UpdaterActivity.class));
@@ -261,7 +262,7 @@ public class MainActivity extends ComponentActivity {
  private void showInfo(){
   SensorManager sm=(SensorManager)getSystemService(SENSOR_SERVICE);boolean gyro=sm.getDefaultSensor(Sensor.TYPE_GYROSCOPE)!=null;
   SharedPreferences p=getSharedPreferences("luma",0);
-  String message="Versão de teste 0.1.9\n"+Build.MANUFACTURER+" "+Build.MODEL+" · Android "+Build.VERSION.RELEASE+"\n\n"+cameraNote+"Giroscópio: "+(gyro?"detectado; ainda não usado nesta versão":"não detectado")+"\n\nFotos: ajuste conservador de luz com preservação das cores. Esta versão não contém modelo neural de IA.\n\nVídeo: análise a 15 amostras/s, suavização de deslocamento e rotação; recorte de 20% na imagem quando estabilizada. Cor e brilho consistentes no vídeo. Corrida intensa, baixa luz e objetos próximos podem limitar o resultado.\n\nProcessamento 100% local, sem internet. Fotos: somente a tratada é salva na galeria. Vídeos: original e resultado ficam na pasta Langer.\n\nAo sair, uma gravação é finalizada. O tratamento continua pela notificação, que permite cancelar. Se o Android encerrar o app, recupere as capturas aqui.\n\nBibliotecas: AndroidX/Media3 (Apache 2.0), OpenCV 4.12 (Apache 2.0).";
+  String message="Versão de teste 0.1.10\n"+Build.MANUFACTURER+" "+Build.MODEL+" · Android "+Build.VERSION.RELEASE+"\n\n"+cameraNote+"Giroscópio: "+(gyro?"detectado; ainda não usado nesta versão":"não detectado")+"\n\nFotos: ajuste conservador de luz com preservação das cores. Esta versão não contém modelo neural de IA.\n\nVídeo: análise a 15 amostras/s, suavização de deslocamento e rotação; recorte de 20% na imagem quando estabilizada. Cor e brilho consistentes no vídeo. Corrida intensa, baixa luz e objetos próximos podem limitar o resultado.\n\nProcessamento 100% local, sem internet. Fotos: somente a tratada é salva na galeria. Vídeos: original e resultado ficam na pasta Langer.\n\nAo sair, uma gravação é finalizada. O tratamento continua pela notificação, que permite cancelar. Se o Android encerrar o app, recupere as capturas aqui.\n\nBibliotecas: AndroidX/Media3 (Apache 2.0), OpenCV 4.12 (Apache 2.0).";
   AlertDialog.Builder dialog=new AlertDialog.Builder(this).setTitle("Langer · recursos reais").setMessage(message).setPositiveButton("Fechar",null);
   if(p.getBoolean("busy",false))dialog.setNegativeButton("Cancelar tratamento",(d,w)->startService(new Intent(this,ProcessingService.class).setAction("cancel")));
   else dialog.setNeutralButton("Recuperar capturas",(d,w)->recoverCaptures());

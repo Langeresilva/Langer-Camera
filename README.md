@@ -1,4 +1,4 @@
-# Langer Câmera — 0.1.9
+# Langer Câmera — 0.1.10
 
 Câmera Android desenvolvida para testes no Redmi Note 14 4G (24117RN76L), Android 16. Pacote: `br.com.luma.camera`. Sem anúncios, contas ou APIs pagas. Fotos e vídeos são processados no próprio aparelho. A internet é usada pelo atualizador quando solicitado.
 
@@ -86,3 +86,9 @@ Verificar atualização e Recursos e recuperação ficam no menu de controles no
 Compilação, 14 testes JVM e Android Lint sem erros; reconstrução do APK pelo delta e assinatura verificadas. A prévia do ícone abaixo foi renderizada a partir do vetor usado pelo app. O layout, as animações e miniaturas no Redmi ainda precisam de avaliação física; não há aparelho conectado por ADB e o emulador local não iniciou nas tentativas anteriores.
 
 ![Ícone do Langer Câmera](docs/icone.png)
+
+## Pedido editável — 0.1.10
+
+O pedido de edição aparece em um campo de várias linhas antes do envio ao ChatGPT. Pode ser personalizado, copiado e restaurado para o padrão. Salvar pedido e Abrir ChatGPT persistem o texto no aparelho; cancelar descarta a edição. Não permite salvar ou enviar texto vazio. O limite é 4.000 caracteres. O compartilhamento e a opção de copiar usam o texto atualmente editado, inclusive quebras de linha. O menu principal também oferece Editar pedido ao ChatGPT, sem exigir uma foto. Não há chamadas à API.
+
+Compilação, 14 testes JVM e lint aprovados. O APK foi reconstruído pelo delta e teve assinatura verificada. Campo de edição, teclado e recebimento do texto no ChatGPT ainda precisam ser conferidos no Redmi.
