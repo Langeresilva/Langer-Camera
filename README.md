@@ -1,4 +1,4 @@
-# Langer Câmera — 0.1.6
+# Langer Câmera — 0.1.7
 
 Câmera Android desenvolvida para testes no Redmi Note 14 4G (24117RN76L), Android 16. Pacote: `br.com.luma.camera`. Sem anúncios, contas ou APIs pagas. Fotos e vídeos são processados no próprio aparelho. A internet é usada pelo atualizador quando solicitado.
 
@@ -66,3 +66,7 @@ O botão Enviar ao ChatGPT está na câmera e no comparador. Após confirmação
 Não há integração com a API da OpenAI, credencial, processamento pago automático ou envio em segundo plano. A edição ocorre no aplicativo receptor e obedece aos limites da conta do usuário. O resultado precisa ser salvo manualmente pelo ChatGPT; não retorna automaticamente ao Langer Câmera. O app não verifica assinatura ou disponibilidade de edição da conta. A captura e o tratamento local permanecem disponíveis.
 
 Compilação, 14 testes JVM e lint aprovados; compartilhamento e recepção de imagem/texto no ChatGPT ainda precisam ser validados no celular.
+
+## Abertura direta — 0.1.7
+
+O envio passa a usar ACTION_SEND direcionado a com.openai.chatgpt, sem criar o seletor de aplicativos no caminho principal. Mantém foto original, texto e permissão temporária de leitura. Se o Android não conseguir abrir esse destino, oferece a seleção manual em um diálogo de alternativa. Não força envio da mensagem dentro do ChatGPT. Compilação, 14 testes JVM e lint passaram; abertura no app receptor ainda depende de teste no aparelho.
