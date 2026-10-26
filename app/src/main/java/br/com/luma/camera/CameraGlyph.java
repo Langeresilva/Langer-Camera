@@ -11,6 +11,8 @@ public final class CameraGlyph extends Drawable {
   canvas.save();Rect b=getBounds();canvas.translate(b.left,b.top);canvas.scale(b.width()/24f,b.height()/24f);
   paint.setColor(color);paint.setStyle(Paint.Style.STROKE);paint.setStrokeWidth(1.7f);paint.setStrokeCap(Paint.Cap.ROUND);paint.setStrokeJoin(Paint.Join.ROUND);
   switch(name){
+   case "flash":
+    path(canvas,14,2,5,13,11,13,10,22,19,10,13,10,14,2);break;
    case "flip":
     canvas.drawArc(4,4,20,20,205,135,false,paint);canvas.drawArc(4,4,20,20,25,135,false,paint);
     path(canvas,17,3,20,8,14,8);path(canvas,7,21,4,16,10,16);canvas.drawCircle(12,12,2.3f,paint);break;

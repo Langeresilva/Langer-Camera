@@ -1,4 +1,4 @@
-# Langer Câmera — 0.1.10
+# Langer Câmera — 0.1.11
 
 Câmera Android desenvolvida para testes no Redmi Note 14 4G (24117RN76L), Android 16. Pacote: `br.com.luma.camera`. Sem anúncios, contas ou APIs pagas. Fotos e vídeos são processados no próprio aparelho. A internet é usada pelo atualizador quando solicitado.
 
@@ -92,3 +92,23 @@ Compilação, 14 testes JVM e Android Lint sem erros; reconstrução do APK pelo
 O pedido de edição aparece em um campo de várias linhas antes do envio ao ChatGPT. Pode ser personalizado, copiado e restaurado para o padrão. Salvar pedido e Abrir ChatGPT persistem o texto no aparelho; cancelar descarta a edição. Não permite salvar ou enviar texto vazio. O limite é 4.000 caracteres. O compartilhamento e a opção de copiar usam o texto atualmente editado, inclusive quebras de linha. O menu principal também oferece Editar pedido ao ChatGPT, sem exigir uma foto. Não há chamadas à API.
 
 Compilação, 14 testes JVM e lint aprovados. O APK foi reconstruído pelo delta e teve assinatura verificada. Campo de edição, teclado e recebimento do texto no ChatGPT ainda precisam ser conferidos no Redmi.
+
+## Flash e troca durante vídeo — 0.1.11
+
+O controle de raio no cabeçalho oferece flash traseiro desligado/automático/ligado nas fotos, flash de tela ligado/desligado para selfies e luz contínua ligada/desligada para vídeo em câmeras que anunciam unidade de flash. A tela recupera o brilho anterior ao terminar, falhar ou sair da câmera. A luz contínua desliga ao finalizar a gravação ou sair do app. O indicador SEM informa ausência de LED na câmera atual. Preferências de flash de foto são guardadas separadamente para traseira e frontal; luz de vídeo não liga automaticamente ao reabrir o app.
+
+Virar câmera, toque duplo no visor e Volume + alternam frontal/traseira durante a gravação. Volume + mantém a função de volume fora de uma gravação. Toque único ajusta foco/exposição. Repetições ao segurar o botão físico e trocas muito rápidas são bloqueadas. O gravador persistente e a mesma instância de VideoCapture são reutilizados, sem criar outro arquivo por troca. Pausa brevemente áudio e vídeo ao reassociar a câmera e retoma quando ela anuncia OPEN; pode haver corte ou transição visível. O contador usa a duração gravada em vez do relógio de parede. A orientação do vídeo fica fixa durante a sessão.
+
+Se a nova câmera não abrir, tenta restaurar a anterior. Se ambas as tentativas falharem, finaliza para preservar o trecho já gravado. O botão de parar continua disponível durante a troca. Ao sair do app, a gravação é finalizada explicitamente mesmo sendo persistente.
+
+Referências técnicas: https://developer.android.com/reference/androidx/camera/video/PendingRecording e https://developer.android.com/reference/androidx/camera/core/ImageCapture.ScreenFlash .
+
+Compilação, 14 testes JVM existentes e lint sem erros. Esses testes não cobrem hardware de câmera. O APK reconstruído pelo delta teve hash idêntico e assinatura verificada. Troca de lentes, flash, luz contínua, teclas de volume, sincronismo e transições no Redmi ainda precisam de teste físico. Não há dispositivo conectado por ADB.
+
+### Roteiro de teste no Redmi
+
+1. Foto traseira: conferir flash OFF, AUTO em ambiente escuro e ON. Confirmar uma foto tratada salva por captura.
+2. Selfie com TELA: conferir iluminação pela tela e restauração do brilho após a foto e ao sair.
+3. Vídeo curto: ligar luz na traseira, trocar para frontal e voltar. Conferir que o LED não ilumina indevidamente na frontal e desliga ao finalizar.
+4. Gravar 15 segundos e alternar por botão, toque duplo e Volume +; verificar único arquivo, áudio, orientação e estabilidade após exportar.
+5. Segurar Volume +: não deve trocar repetidamente. Apertar parar durante uma troca e sair durante a gravação: conferir finalização e recuperação do trecho.
