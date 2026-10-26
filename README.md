@@ -1,4 +1,4 @@
-# Langer Câmera — 0.1.11
+# Langer Câmera — 0.1.12
 
 Câmera Android desenvolvida para testes no Redmi Note 14 4G (24117RN76L), Android 16. Pacote: `br.com.luma.camera`. Sem anúncios, contas ou APIs pagas. Fotos e vídeos são processados no próprio aparelho. A internet é usada pelo atualizador quando solicitado.
 
@@ -112,3 +112,7 @@ Compilação, 14 testes JVM existentes e lint sem erros. Esses testes não cobre
 3. Vídeo curto: ligar luz na traseira, trocar para frontal e voltar. Conferir que o LED não ilumina indevidamente na frontal e desliga ao finalizar.
 4. Gravar 15 segundos e alternar por botão, toque duplo e Volume +; verificar único arquivo, áudio, orientação e estabilidade após exportar.
 5. Segurar Volume +: não deve trocar repetidamente. Apertar parar durante uma troca e sair durante a gravação: conferir finalização e recuperação do trecho.
+
+## Atalho físico — 0.1.12
+
+Durante a gravação, Volume menos alterna a câmera frontal/traseira, substituindo o atalho anterior de Volume mais. Fora da gravação continua controlando volume. Repetição ao segurar a tecla continua bloqueada; botão Virar câmera e toque duplo permanecem disponíveis. Textos e descrição de acessibilidade atualizados. Compilação, testes JVM e lint concluídos; a tecla física ainda precisa ser testada no aparelho.

@@ -162,7 +162,7 @@ public class MainActivity extends ComponentActivity {
   thumbnailLabel=text("Galeria",10,MUTED);thumbnailLabel.setGravity(Gravity.CENTER);thumbnailLabel.setPadding(0,dp(5),0,0);album.addView(thumbnailLabel);
   shutter=new ShutterButton(this);controls.addView(shutter,new LinearLayout.LayoutParams(dp(96),dp(96)));shutter.setOnClickListener(v->{if(videoModeSelected)toggleVideo();else capturePhoto();});
   LinearLayout cameraFlip=new LinearLayout(this);cameraFlip.setOrientation(LinearLayout.VERTICAL);cameraFlip.setGravity(Gravity.CENTER);controls.addView(cameraFlip,new LinearLayout.LayoutParams(0,-1,1));
-  flip=button("");flip.setPadding(dp(18),dp(18),dp(18),dp(18));flip.setBackground(surface(0xff15251f,30,0xff345143));CameraGlyph flipIcon=new CameraGlyph("flip",MINT);flipIcon.setBounds(0,0,dp(24),dp(24));flip.setCompoundDrawables(flipIcon,null,null,null);flip.setContentDescription("Alternar câmera frontal e traseira, inclusive durante a gravação. Atalho: Volume mais.");cameraFlip.addView(flip,new LinearLayout.LayoutParams(dp(60),dp(60)));flip.setOnClickListener(v->switchCamera());TextView flipLabel=text("Virar câmera",10,MUTED);flipLabel.setPadding(0,dp(5),0,0);cameraFlip.addView(flipLabel);
+  flip=button("");flip.setPadding(dp(18),dp(18),dp(18),dp(18));flip.setBackground(surface(0xff15251f,30,0xff345143));CameraGlyph flipIcon=new CameraGlyph("flip",MINT);flipIcon.setBounds(0,0,dp(24),dp(24));flip.setCompoundDrawables(flipIcon,null,null,null);flip.setContentDescription("Alternar câmera frontal e traseira, inclusive durante a gravação. Atalho: Volume menos.");cameraFlip.addView(flip,new LinearLayout.LayoutParams(dp(60),dp(60)));flip.setOnClickListener(v->switchCamera());TextView flipLabel=text("Virar câmera",10,MUTED);flipLabel.setPadding(0,dp(5),0,0);cameraFlip.addView(flipLabel);
   status=text("Abrindo câmera…",11,TEXT);status.setGravity(Gravity.CENTER);status.setPadding(dp(12),dp(7),dp(12),dp(7));status.setBackground(shape(0xb30c2018,14));status.setMaxLines(3);FrameLayout.LayoutParams statusPosition=new FrameLayout.LayoutParams(-2,-2,Gravity.BOTTOM|Gravity.CENTER_HORIZONTAL);statusPosition.bottomMargin=dp(66);statusPosition.leftMargin=dp(12);statusPosition.rightMargin=dp(12);viewfinder.addView(status,statusPosition);
   Button share=button("Melhorar no ChatGPT");glyph(share,"spark",MINT);share.setBackground(surface(0xff14372c,18,0xff426a57));root.addView(share,new LinearLayout.LayoutParams(-1,dp(52)));
   share.setOnClickListener(v->{if(recording!=null||capturing){toast("Finalize a captura antes de compartilhar.");return;}ChatGptShare.latest(this);});
@@ -215,7 +215,7 @@ public class MainActivity extends ComponentActivity {
   videoMode.setTextColor(videoModeSelected?INK:MUTED);videoMode.setBackground(surface(videoModeSelected?MINT:0xff15251f,14,0));glyph(videoMode,"video",videoModeSelected?INK:MUTED);
   shutter.setVideoMode(videoModeSelected);
   stabilize.setVisibility(videoModeSelected?View.VISIBLE:View.GONE);
-  modeLabel.setText(videoModeSelected?"Trocar câmera: toque duplo ou Volume +":"Luz equilibrada · foto tratada no aparelho");
+  modeLabel.setText(videoModeSelected?"Trocar câmera: toque duplo ou Volume −":"Luz equilibrada · foto tratada no aparelho");
   updateFlashButton();
  }
  private void clearScreenLight(){
@@ -279,7 +279,7 @@ public class MainActivity extends ComponentActivity {
    if(serial!=switchSerial||recording!=session||recordingStopping||!switchingCamera||!resumed||activeCamera!=expected)return;
    if(state.getType()==CameraState.Type.OPEN){
     clearSwitchWatch();switchingCamera=false;
-    try{session.resume();applyLighting();badge.setText((front?"Frontal":"Traseira")+" · VÍDEO");status.setText("Gravando · toque duplo ou Volume + para virar");if(rollback)toast("Troca indisponível. A gravação continua na câmera anterior.");}
+    try{session.resume();applyLighting();badge.setText((front?"Frontal":"Traseira")+" · VÍDEO");status.setText("Gravando · toque duplo ou Volume − para virar");if(rollback)toast("Troca indisponível. A gravação continua na câmera anterior.");}
     catch(Exception e){finishFailedSwitch();}
    }
   });
@@ -294,11 +294,11 @@ public class MainActivity extends ComponentActivity {
   if(recording==null||recordingStopping)return;recordingStopping=true;switchSerial++;clearSwitchWatch();switchingCamera=false;shutter.setEnabled(false);status.setText("Finalizando gravação…");recording.stop();
  }
  @Override public boolean onKeyDown(int keyCode,KeyEvent event){
-  if(keyCode==KeyEvent.KEYCODE_VOLUME_UP&&recording!=null&&resumed){volumeSwitchHeld=true;if(event.getRepeatCount()==0)switchCamera();return true;}
+  if(keyCode==KeyEvent.KEYCODE_VOLUME_DOWN&&recording!=null&&resumed){volumeSwitchHeld=true;if(event.getRepeatCount()==0)switchCamera();return true;}
   return super.onKeyDown(keyCode,event);
  }
  @Override public boolean onKeyUp(int keyCode,KeyEvent event){
-  if(keyCode==KeyEvent.KEYCODE_VOLUME_UP&&volumeSwitchHeld){volumeSwitchHeld=false;return true;}
+  if(keyCode==KeyEvent.KEYCODE_VOLUME_DOWN&&volumeSwitchHeld){volumeSwitchHeld=false;return true;}
   return super.onKeyUp(keyCode,event);
  }
  private void loadCamera(){
@@ -353,7 +353,7 @@ public class MainActivity extends ComponentActivity {
    if(audio)pending=pending.withAudioEnabled();else toast("Gravando sem áudio. Ative o microfone nas permissões para ter som.");
    recording=pending.start(ContextCompat.getMainExecutor(this),event->{
     recordedNanos=event.getRecordingStats().getRecordedDurationNanos();
-    if(event instanceof VideoRecordEvent.Start){recordingStarting=false;recordingStarted=true;recordStart=SystemClock.elapsedRealtime();shutter.setRecording(true);timer.setBackground(shape(0xb33e1719,16));status.setText("Gravando · toque duplo ou Volume + para virar");}
+    if(event instanceof VideoRecordEvent.Start){recordingStarting=false;recordingStarted=true;recordStart=SystemClock.elapsedRealtime();shutter.setRecording(true);timer.setBackground(shape(0xb33e1719,16));status.setText("Gravando · toque duplo ou Volume − para virar");}
     if(event instanceof VideoRecordEvent.Finalize){
      VideoRecordEvent.Finalize end=(VideoRecordEvent.Finalize)event;recording=null;recordingStarted=false;recordingStarting=false;recordingStopping=false;switchSerial++;clearSwitchWatch();switchingCamera=false;timer.setText("");timer.setBackgroundColor(Color.TRANSPARENT);shutter.setRecording(false);torchWanted=false;applyLighting();
      if(!end.hasError()||end.getError()==VideoRecordEvent.Finalize.ERROR_SOURCE_INACTIVE||end.getError()==VideoRecordEvent.Finalize.ERROR_DURATION_LIMIT_REACHED){
@@ -379,7 +379,7 @@ public class MainActivity extends ComponentActivity {
  private void showInfo(){
   SensorManager sm=(SensorManager)getSystemService(SENSOR_SERVICE);boolean gyro=sm.getDefaultSensor(Sensor.TYPE_GYROSCOPE)!=null;
   SharedPreferences p=getSharedPreferences("luma",0);
-  String message="Versão de teste 0.1.11\n"+Build.MANUFACTURER+" "+Build.MODEL+" · Android "+Build.VERSION.RELEASE+"\n\n"+cameraNote+"Giroscópio: "+(gyro?"detectado; ainda não usado nesta versão":"não detectado")+"\n\nFotos: ajuste conservador de luz com preservação das cores. Esta versão não contém modelo neural de IA.\n\nVídeo: análise a 15 amostras/s, suavização de deslocamento e rotação; recorte de 20% na imagem quando estabilizada. Cor e brilho consistentes no vídeo. Corrida intensa, baixa luz e objetos próximos podem limitar o resultado.\n\nProcessamento 100% local, sem internet. Fotos: somente a tratada é salva na galeria. Vídeos: original e resultado ficam na pasta Langer.\n\nAo sair, uma gravação é finalizada. O tratamento continua pela notificação, que permite cancelar. Se o Android encerrar o app, recupere as capturas aqui.\n\nBibliotecas: AndroidX/Media3 (Apache 2.0), OpenCV 4.12 (Apache 2.0).";
+  String message="Versão de teste 0.1.12\n"+Build.MANUFACTURER+" "+Build.MODEL+" · Android "+Build.VERSION.RELEASE+"\n\n"+cameraNote+"Giroscópio: "+(gyro?"detectado; ainda não usado nesta versão":"não detectado")+"\n\nFotos: ajuste conservador de luz com preservação das cores. Esta versão não contém modelo neural de IA.\n\nVídeo: análise a 15 amostras/s, suavização de deslocamento e rotação; recorte de 20% na imagem quando estabilizada. Cor e brilho consistentes no vídeo. Corrida intensa, baixa luz e objetos próximos podem limitar o resultado.\n\nProcessamento 100% local, sem internet. Fotos: somente a tratada é salva na galeria. Vídeos: original e resultado ficam na pasta Langer.\n\nAo sair, uma gravação é finalizada. O tratamento continua pela notificação, que permite cancelar. Se o Android encerrar o app, recupere as capturas aqui.\n\nBibliotecas: AndroidX/Media3 (Apache 2.0), OpenCV 4.12 (Apache 2.0).";
   AlertDialog.Builder dialog=new AlertDialog.Builder(this).setTitle("Langer · recursos reais").setMessage(message).setPositiveButton("Fechar",null);
   if(p.getBoolean("busy",false))dialog.setNegativeButton("Cancelar tratamento",(d,w)->startService(new Intent(this,ProcessingService.class).setAction("cancel")));
   else dialog.setNeutralButton("Recuperar capturas",(d,w)->recoverCaptures());
