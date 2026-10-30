@@ -119,3 +119,6 @@ Durante a gravação, Volume menos alterna a câmera frontal/traseira, substitui
 
 ### 0.1.13
 Video: motion analysis at 30 Hz, longer smoothing, tracking-loss boundaries, improved use of crop margin, requested 18 Mbps export and moderate contrast/color adjustments. Existing 1.25x crop retained. Device validation required; processing time and output size may increase.
+
+### 0.1.14
+Intensive stabilization: 640px analysis, 400 features, 1.5-second smoothing radius and fixed crop per tracked scene (1.25x to 1.65x). Rotation correction up to 0.12 radians. Export requests 35 Mbps. Natural moderate color treatment retained; no claim of matching iPhone HDR or eliminating blur. Larger crop sacrifices field of view and detail.

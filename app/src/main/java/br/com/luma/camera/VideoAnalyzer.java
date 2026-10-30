@@ -25,7 +25,7 @@ public final class VideoAnalyzer {
    MotionPath path=new MotionPath(frames); double luminosity=0; int width=256,height=144,tracked=0,received=0;
    for(int i=0;i<frames;i++) {
     if(Thread.currentThread().isInterrupted()) throw new InterruptedException("Cancelado");
-    Bitmap bmp=retriever.getScaledFrameAtTime(i*1_000_000L/FPS,MediaMetadataRetriever.OPTION_CLOSEST,480,480);
+    Bitmap bmp=retriever.getScaledFrameAtTime(i*1_000_000L/FPS,MediaMetadataRetriever.OPTION_CLOSEST,640,640);
     if(i>0) {path.x[i]=path.x[i-1];path.y[i]=path.y[i-1];path.a[i]=path.a[i-1];}
     if(bmp==null) continue;
     width=bmp.getWidth();height=bmp.getHeight();
@@ -34,7 +34,7 @@ public final class VideoAnalyzer {
     luminosity+=Core.mean(gray).val[0];received++;
     int before=tracked;
     if(stabilize&&previous!=null) {
-     MatOfPoint corners=new MatOfPoint();Imgproc.goodFeaturesToTrack(previous,corners,240,0.015,8);
+     MatOfPoint corners=new MatOfPoint();Imgproc.goodFeaturesToTrack(previous,corners,400,0.015,8);
      if(corners.rows()>=12) {
       MatOfPoint2f p0=new MatOfPoint2f(corners.toArray()),p1=new MatOfPoint2f();
       MatOfByte status=new MatOfByte();MatOfFloat errors=new MatOfFloat();
@@ -67,7 +67,7 @@ public final class VideoAnalyzer {
     if(i%FPS==0) progress.accept("Analisando vídeo · "+(i*100/frames)+"%");
    }
    float brightness=(float)Math.max(-.015,Math.min(.035,(105-luminosity/Math.max(1,received))/1200));
-   return new Result(path.corrections(24),width,height,brightness,tracked,frames);
+   return new Result(path.corrections(45),width,height,brightness,tracked,frames);
   } finally {if(previous!=null) previous.release();retriever.release();}
  }
 }

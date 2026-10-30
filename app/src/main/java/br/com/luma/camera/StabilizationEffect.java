@@ -7,12 +7,14 @@ import androidx.media3.effect.MatrixTransformation;
 @androidx.annotation.OptIn(markerClass=androidx.media3.common.util.UnstableApi.class)
 public final class StabilizationEffect implements MatrixTransformation {
  private final VideoAnalyzer.Result result;
- public StabilizationEffect(VideoAnalyzer.Result r){result=r;}
+ private final double[] zooms;
+ public StabilizationEffect(VideoAnalyzer.Result r){result=r;zooms=r.correction().sceneZooms(r.width(),r.height());}
  @Override public Matrix getMatrix(long timeUs) {
   double[] c=result.correction().at(timeUs*VideoAnalyzer.FPS/1_000_000.0);
-  double angle=Math.max(-.055,Math.min(.055,c[2]));
+  double angle=Math.max(-.12,Math.min(.12,c[2]));
   double cos=Math.cos(angle),sin=Math.sin(angle),aspect=(double)result.width()/result.height();
-  double zoom=1.25;
+  int index=Math.max(0,Math.min(zooms.length-1,(int)(timeUs*VideoAnalyzer.FPS/1_000_000L)));
+  double zoom=zooms[index];
   // Convert pixel-space correction (positive Y down) into normalized GL coordinates.
   double tx=2*c[0]/result.width(),ty=-2*c[1]/result.height();
   // Inverse map output corners; conservatively divide spare margin across both axes.

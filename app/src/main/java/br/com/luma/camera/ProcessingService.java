@@ -80,7 +80,7 @@ public class ProcessingService extends Service {
     .setEffects(new Effects(Collections.emptyList(),effects)).build();
    transformer=new Transformer.Builder(this).setVideoMimeType(MimeTypes.VIDEO_H264)
     .setEncoderFactory(new DefaultEncoderFactory.Builder(this)
-     .setRequestedVideoEncoderSettings(new VideoEncoderSettings.Builder().setBitrate(18_000_000).build()).build())
+     .setRequestedVideoEncoderSettings(new VideoEncoderSettings.Builder().setBitrate(35_000_000).build()).build())
     .addListener(new Transformer.Listener(){
      @Override public void onCompleted(Composition composition,ExportResult result){
       main.removeCallbacks(exportProgress);

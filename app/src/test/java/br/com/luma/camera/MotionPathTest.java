@@ -35,4 +35,10 @@ public class MotionPathTest {
   assertEquals(5,p.at(.9)[0],1e-9);
   assertEquals(-20,p.at(1)[0],1e-9);
  }
+ @Test public void cropIsConstantWithinSceneAndBounded() {
+  MotionPath p=new MotionPath(60);p.cuts.set(30);p.x[15]=100;
+  double[] z=p.sceneZooms(360,640);
+  for(int i=0;i<30;i++){assertEquals(z[0],z[i],0);assertTrue(z[i]<=1.65);}
+  assertTrue(z[0]>1.25);assertEquals(1.25,z[30],0);
+ }
 }
