@@ -24,4 +24,15 @@ public class MotionPathTest {
   assertEquals(10,p.at(100)[0],1e-9);
   assertEquals(0,p.at(-1)[0],1e-9);
  }
+ @Test public void smoothingDoesNotCrossCameraCut() {
+  MotionPath p=new MotionPath(60);p.cuts.set(30);
+  for(int i=30;i<60;i++)p.x[i]=100;
+  MotionPath c=p.corrections(24);
+  for(double v:c.x)assertEquals(0,v,1e-8);
+ }
+ @Test public void interpolationDoesNotBlendDifferentScenes() {
+  MotionPath p=new MotionPath(2);p.x[0]=5;p.x[1]=-20;p.cuts.set(1);
+  assertEquals(5,p.at(.9)[0],1e-9);
+  assertEquals(-20,p.at(1)[0],1e-9);
+ }
 }

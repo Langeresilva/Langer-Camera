@@ -116,3 +116,6 @@ Compilação, 14 testes JVM existentes e lint sem erros. Esses testes não cobre
 ## Atalho físico — 0.1.12
 
 Durante a gravação, Volume menos alterna a câmera frontal/traseira, substituindo o atalho anterior de Volume mais. Fora da gravação continua controlando volume. Repetição ao segurar a tecla continua bloqueada; botão Virar câmera e toque duplo permanecem disponíveis. Textos e descrição de acessibilidade atualizados. Compilação, testes JVM e lint concluídos; a tecla física ainda precisa ser testada no aparelho.
+
+### 0.1.13
+Video: motion analysis at 30 Hz, longer smoothing, tracking-loss boundaries, improved use of crop margin, requested 18 Mbps export and moderate contrast/color adjustments. Existing 1.25x crop retained. Device validation required; processing time and output size may increase.

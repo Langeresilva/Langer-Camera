@@ -7,3 +7,5 @@ local.properties
 /entrega/
 __pycache__/
 .codex-remote-attachments/
+
+.codex-attachments/

@@ -18,8 +18,12 @@ public final class StabilizationEffect implements MatrixTransformation {
   // Inverse map output corners; conservatively divide spare margin across both axes.
   double spareX=Math.max(0,1-(Math.abs(cos)+Math.abs(sin)/aspect)/zoom);
   double spareY=Math.max(0,1-(Math.abs(cos)+Math.abs(sin)*aspect)/zoom);
-  double bound=Math.min(spareX,spareY)*zoom/(1+Math.max(aspect,1/aspect));
-  tx=Math.max(-bound,Math.min(bound,tx*zoom));ty=Math.max(-bound,Math.min(bound,ty*zoom));
+  // Clamp in the rotated source axes: use the available crop without crossing edges.
+  double u=cos*(tx*zoom)-sin*(ty*zoom)/aspect;
+  double v=sin*aspect*(tx*zoom)+cos*(ty*zoom);
+  u=Math.max(-spareX*zoom,Math.min(spareX*zoom,u));
+  v=Math.max(-spareY*zoom,Math.min(spareY*zoom,v));
+  tx=cos*u+sin*v/aspect;ty=-sin*aspect*u+cos*v;
   Matrix matrix=new Matrix();
   matrix.setValues(new float[]{(float)(zoom*cos),(float)(zoom*sin/aspect),(float)tx,(float)(-zoom*sin*aspect),(float)(zoom*cos),(float)ty,0,0,1});
   return matrix;

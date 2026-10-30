@@ -73,11 +73,14 @@ public class ProcessingService extends Service {
    List<Effect> effects=new ArrayList<>();
    boolean reliable=stabilize&&analysis.tracked()>Math.max(3,analysis.samples()/5);
    if(reliable) effects.add(new StabilizationEffect(analysis));
+   effects.add(new Contrast(0.04f));
    effects.add(new Brightness(analysis.brightness()));
-   effects.add(new HslAdjustment.Builder().adjustSaturation(4).build());
+   effects.add(new HslAdjustment.Builder().adjustSaturation(6).build());
    EditedMediaItem item=new EditedMediaItem.Builder(MediaItem.fromUri(Uri.fromFile(source)))
     .setEffects(new Effects(Collections.emptyList(),effects)).build();
    transformer=new Transformer.Builder(this).setVideoMimeType(MimeTypes.VIDEO_H264)
+    .setEncoderFactory(new DefaultEncoderFactory.Builder(this)
+     .setRequestedVideoEncoderSettings(new VideoEncoderSettings.Builder().setBitrate(18_000_000).build()).build())
     .addListener(new Transformer.Listener(){
      @Override public void onCompleted(Composition composition,ExportResult result){
       main.removeCallbacks(exportProgress);
